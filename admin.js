@@ -6,7 +6,7 @@ const authenticateToken = require('../config/auth');
 const { userCheck, adminCheck } = require('../config/test');
 
 
-const storage = multer.diskStorage({
+const storage = multer.diskStorage({ 
     destination: (req, file, cb) => {
         cb(null, 'public/uploads')
     },
@@ -396,23 +396,33 @@ router.get('/footer/delete/:id', authenticateToken, async (req, res) => {
 });
 
 
-router.get('/adminUpdateRole', authenticateToken, (req, res) => {
-    res.render('adminUpdateRole', { role: 'admin' });
+router.get('/adminUpdateRole', authenticateToken, adminCheck, (req, res) => {
+    res.render('adminUpdateRole', { successMessage: req.query.successMessage, role: 'admin' });
 });
 
-router.post('/adminUpdateRole', authenticateToken, (req, res) => {
-    let { newRole, userId } = req.body;
+router.post('/adminUpdateRole', authenticateToken, adminCheck, (req, res) => {
+    let { newrole, id } = req.body;
 
-    var sql = 'UPDATE users SET role = ? WHERE id = ?';
-    db.query(sql, [ newRole, userId ], async (error, results) => {
+    let sql = 'UPDATE users SET role = ? WHERE id = ?';
+    db.query(sql, [newrole, id], async (error, results) => {
         if (error) throw error;
 
         if (results.affectedRows === 0) {
-            return res.render('adminUpdateRole', { message: 'User not found', role: 'admin' });
+            return res.render('adminUpdateRole', { role: 'admin', errorMessage: 'User not found' });
         }
-        res.render('adminUpdateRole', { successMessage: 'User role updated successfully', role: 'admin' });
+        
+        let successMessage = encodeURIComponent('Role successfully Updated ..');
+        return res.redirect(`/admin/adminUpdateRole?successMessage=${successMessage}`);
     });
 });
+
+
+
+
+
+
+
+
 
 
 

@@ -44,7 +44,7 @@ const upload = multer({ storage: storage });
 
 router.post('/user/profile', authenticateToken, upload.fields([{ name: 'profile', maxCount: 1 }, { name: 'banner', maxCount: 1 }]), async (req, res) => {
     try {
-        
+
         // ডাটাবেস থেকে আগের প্রোফাইল এবং ব্যানার তথ্য বের করা
         const sqlSelect = "SELECT profile, banner FROM users WHERE id = ?";
         db.query(sqlSelect, [req.user.userid], (error, results) => {
@@ -342,8 +342,6 @@ router.get('/logout', (req, res) => {
     res.redirect('/login');
 });
 
-
-
 router.get('/', checkLogin, async (req, res) => {
     try {
         let sql = 'SELECT * FROM hero';
@@ -372,9 +370,6 @@ router.get('/', checkLogin, async (req, res) => {
         return res.status(500).send('Server error');
     }
 });
-
-
-
 
 
 // router.post('/user/post', upload.array('photos', 1220), authenticateToken, async (req, res) => { 
@@ -457,15 +452,40 @@ router.post('/user/post', upload.single('image'), authenticateToken, async (req,
     });
 });
 
-
-
 router.get('/user/post/delete/:id', async (req, res) => {
-    var sql = 'DELETE FROM post WHERE id = ?';
+    let sql = 'DELETE FROM post WHERE id = ?';
     db.query(sql, [req.params.id], async (error, results) => {
         if (error) throw error;
 
         let deleteMessage = encodeURIComponent('Your Post Deleted Successfully compleated ..');
         return res.redirect(`/user/post?deleteMessage=${deleteMessage}`)
+    });
+});
+
+router.post('/user/post', upload.single('image'), authenticateToken, async (req, res, next) => {
+    let { title, message } = req.body;
+
+    if (!title || !message) {
+        let errorMessage = encodeURIComponent('Title image and Message are required');
+        return res.redirect(`/user/post?errorMessage=${errorMessage}`);
+    }
+
+    let image;
+    if (req.file) {
+        image = req.file.filename;
+    }
+
+    if (!image) {
+        let errorMessage = encodeURIComponent('At least one image is required');
+        return res.redirect(`/user/post?errorMessage=${errorMessage}`);
+    }
+
+    let sql = 'INSERT INTO post (title, image, message, userid) VALUES (?, ?, ?, ?)';
+    db.query(sql, [title, image, message, req.user.userid], async (error, results) => {
+        if (error) throw error;
+
+        let message = encodeURIComponent('Post successfully uploaded ...');
+        return res.redirect(`/user/post?message=${message}`)
     });
 });
 
@@ -555,7 +575,7 @@ module.exports = router;
 //     });
 // });
 
-// Short and Easy Code for invoice 
+// Short and Easy Code for invoice
 // router.post('/invoice', async (req, res) => {
 //     const { reference, quantity, price, sellquantity, sellprice } = req.body;
 //     try {
@@ -577,10 +597,10 @@ module.exports = router;
 //         res.status(500).send('Error processing invoices');
 //     }
 // });
-// Short and Easy Code for invoice 
+// Short and Easy Code for invoice
 
 
-// Full details Code for invoice 
+// Full details Code for invoice
 // router.post('/invoice', async (req, res) => {
 //     const invoices = [];
 //     // Extracting data from request body
@@ -611,7 +631,7 @@ module.exports = router;
 //         res.status(500).send('Error processing invoices');
 //     }
 // });
-// Full details Code for invoice 
+// Full details Code for invoice
 
 // router.get('/delete/:id', (req, res) => {
 //     const sql = 'DELETE FROM requisition WHERE id = ?';
